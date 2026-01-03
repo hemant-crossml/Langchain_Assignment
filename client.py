@@ -1,4 +1,5 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langch
 from cred import gemini_api_key
 
 model= ChatGoogleGenerativeAI(
