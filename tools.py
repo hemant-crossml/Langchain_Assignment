@@ -1,142 +1,127 @@
-# tools.py
-from __future__ import annotations
-
 import ast
-import json
 import operator as op
-import re
-import urllib.parse
-import urllib.request
+import requests
 from datetime import date, timedelta
-from typing import Optional
 
 from langchain_core.tools import tool
 
+from cred import weather_api_key
 
-# =============================================================================
-# 1) Math Tool (safe arithmetic eval)
-# =============================================================================
-_ALLOWED_BIN_OPS = {
+# Math tool (safe case)
+OPERATORS = {
     ast.Add: op.add,
     ast.Sub: op.sub,
     ast.Mult: op.mul,
     ast.Div: op.truediv,
-    ast.FloorDiv: op.floordiv,
-    ast.Mod: op.mod,
     ast.Pow: op.pow,
 }
-_ALLOWED_UNARY_OPS = {ast.UAdd: op.pos, ast.USub: op.neg}
 
 
-def _safe_eval_math(expr: str) -> float:
-    expr = expr.strip()
-    if not expr:
-        raise ValueError("Expression is empty.")
-
-    expr = expr.replace("×", "*").replace("÷", "/")
-    node = ast.parse(expr, mode="eval")
-
-    def _eval(n):
-        if isinstance(n, ast.Expression):
-            return _eval(n.body)
-
-        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)):
-            return float(n.value)
-
-        if isinstance(n, ast.UnaryOp) and type(n.op) in _ALLOWED_UNARY_OPS:
-            return _ALLOWED_UNARY_OPS[type(n.op)](_eval(n.operand))
-
-        if isinstance(n, ast.BinOp) and type(n.op) in _ALLOWED_BIN_OPS:
-            return _ALLOWED_BIN_OPS[type(n.op)](_eval(n.left), _eval(n.right))
-
-        raise ValueError("Unsupported expression. Use only numbers and + - * / // % ** ( ).")
-
-    return _eval(node)
-
-
-@tool("math_tool")
-def math_tool(expression: str) -> str:
+def _eval_expr(node):
     """
-    Evaluate an arithmetic expression and return the result.
+    Summary:
+        Recursively evaluates a restricted Python AST node representing an arithmetic expression.
 
-    Input:
-      expression: arithmetic expression as a string (example: "(234*12)+98")
-    Output:
-      result as a string
+    Args:
+        node: An AST node (e.g., ast.Constant, ast.BinOp) produced by parsing an expression.
+
+    Returns:
+        The numeric result of evaluating the AST node.
+
+    """
+    if isinstance(node, ast.Constant):
+        return node.n
+    if isinstance(node, ast.BinOp):
+        return OPERATORS[type(node.op)](
+            _eval_expr(node.left),
+            _eval_expr(node.right)
+        )
+    raise ValueError("Invalid expression")
+
+
+@tool
+def math_calculator(expression: str) -> str:
+    """
+    Summary:
+        Safely evaluates a basic arithmetic expression using AST parsing (no eval).
+
+    Args:
+        expression (str): Arithmetic expression like "(234 * 12) + 98".
+
+    Returns:
+        str: A string containing either the computed result (e.g., "Result: 2906")
+        or an error message if evaluation fails.
+
     """
     try:
-        result = _safe_eval_math(expression)
-        if abs(result - int(result)) < 1e-12:
-            return str(int(result))
-        return str(result)
+        tree = ast.parse(expression, mode="eval")
+        result = _eval_expr(tree.body)
+        return f"Result: {result}"
     except Exception as e:
-        return f"ERROR: {type(e).__name__}: {e}"
+        return f"Error evaluating expression: {str(e)}"
 
 
-# =============================================================================
-# 2) Text Analyzer Tool
-# =============================================================================
-_POS_WORDS = {"good", "great", "awesome", "amazing", "love", "excellent", "happy", "nice", "fantastic", "positive"}
-_NEG_WORDS = {"bad", "terrible", "awful", "hate", "poor", "sad", "angry", "worst", "negative", "horrible"}
-
-
-@tool("text_analyzer_tool")
-def text_analyzer_tool(text: str) -> dict:
+@tool
+def analyze_text(text: str) -> dict:
     """
-    Analyze text and return word count, character count, and simple rule-based sentiment.
+    Summary:
+        Analyzes a text string to compute word count, character count, and a simple sentiment label.
 
-    Input:
-      text: any string
-    Output (dict):
-      word_count, character_count, sentiment, sentiment_reason
+    Args:
+        text (str): The input text to analyze.
+
+    Returns:
+        dict: A dictionary containing:
+            - word_count (int): Number of whitespace-separated tokens.
+            - character_count (int): Total number of characters in the text.
+            - sentiment (str): "Positive", "Negative", or "Neutral".
+        If an error occurs, returns {"error": "<message>"}.
+
     """
     try:
-        if text is None:
-            raise ValueError("Text is None.")
-        cleaned = text.strip()
-        if not cleaned:
-            raise ValueError("Text is empty.")
+        words = text.split()
+        char_count = len(text)
 
-        tokens = re.findall(r"\b\w+\b", cleaned)
-        word_count = len(tokens)
-        character_count = len(text)
+        positive_words = ["good", "great", "excellent", "happy", "love"]
+        negative_words = ["bad", "poor", "sad", "hate", "terrible"]
 
-        lower_tokens = [t.lower() for t in tokens]
-        pos_hits = sum(1 for t in lower_tokens if t in _POS_WORDS)
-        neg_hits = sum(1 for t in lower_tokens if t in _NEG_WORDS)
+        sentiment_score = 0
+        for word in words:
+            if word.lower() in positive_words:
+                sentiment_score += 1
+            elif word.lower() in negative_words:
+                sentiment_score -= 1
 
-        if pos_hits > neg_hits:
-            sentiment = "positive"
-            reason = f"More positive keywords ({pos_hits}) than negative keywords ({neg_hits})."
-        elif neg_hits > pos_hits:
-            sentiment = "negative"
-            reason = f"More negative keywords ({neg_hits}) than positive keywords ({neg_hits})."
-        else:
-            sentiment = "neutral"
-            reason = f"Equal/zero keyword hits (pos={pos_hits}, neg={neg_hits})."
+        sentiment = "Neutral"
+        if sentiment_score > 0:
+            sentiment = "Positive"
+        elif sentiment_score < 0:
+            sentiment = "Negative"
 
         return {
-            "word_count": word_count,
-            "character_count": character_count,
-            "sentiment": sentiment,
-            "sentiment_reason": reason,
+            "word_count": len(words),
+            "character_count": char_count,
+            "sentiment": sentiment
         }
+
     except Exception as e:
-        return {"error": f"{type(e).__name__}: {e}"}
+        return {"error": str(e)}
 
 
-# =============================================================================
-# 3) Date Utility Tool
-# =============================================================================
 @tool("date_utility_tool")
 def date_utility_tool(days: int) -> str:
     """
-    Return the calendar date after N days from today.
+    Summary:
+        Returns the calendar date after N days from today (local system date).
 
-    Input:
-      days: integer number of days
-    Output:
-      ISO date string YYYY-MM-DD
+    Args:
+        days (int): Number of days to add to today's date.
+
+    Returns:
+        str: ISO date string in the format "YYYY-MM-DD".
+        If validation or computation fails, returns an error string like:
+        "ERROR: TypeError: Days must be an integer."
+
     """
     try:
         if days is None:
@@ -148,67 +133,33 @@ def date_utility_tool(days: int) -> str:
         return f"ERROR: {type(e).__name__}: {e}"
 
 
-# =============================================================================
-# 4) Weather API Tool (Open-Meteo)
-# =============================================================================
-def _http_get_json(url: str, timeout: int = 20) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "langchain-weatherstack-tool/1.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
-
-
-@tool("weather_api_tool")
-def weather_api_tool(city: str, country: Optional[str] = None) -> dict:
+@tool
+def get_weather(city: str) -> dict:
     """
-    Fetch live current weather for a city using Weatherstack.
+    Summary:
+        Fetches live weather data for a given city using the OpenWeatherMap current weather API.
 
-    Input:
-      city: city name (e.g., "Chandigarh")
-      country: optional country hint (e.g., "India")
-    Output (dict):
-      location, current (temperature, weather_descriptions, wind_speed, humidity, feelslike, observation_time)
+    Args:
+        city (str): City name (e.g., "Chandigarh").
+
+    Returns:
+        dict: On success, returns:
+            - temperature (float): Current temperature in Celsius.
+            - condition (str): Weather description (e.g., "clear sky").
+        On failure, returns {"error": "<message>"}.
+
     """
     try:
-        if not city or not city.strip():
-            raise ValueError("City is required.")
+        url = (
+            f"https://api.openweathermap.org/data/2.5/weather"
+            f"?q={city}&appid={weather_api_key}&units=metric"
+        )
+        response = requests.get(url)
+        data = response.json()
 
-        # Prefer env var; fallback to hardcoded key ONLY if you insist.
-        api_key = os.getenv("WEATHERSTACK_API_KEY") or "4d1d8ae207a8c845a52df8a67bf3623e"
-
-        query = f"{city}, {country}" if country else city
-
-        base = "https://api.weatherstack.com/current"
-        url = base + "?" + urllib.parse.urlencode({"access_key": api_key, "query": query})
-
-        data = _http_get_json(url)
-
-        # Weatherstack returns errors in an "error" object.
-        if isinstance(data, dict) and data.get("error"):
-            return {"error": data["error"]}
-
-        location = data.get("location")
-        current = data.get("current")
-        if not location or not current:
-            return {"error": "Unexpected Weatherstack response (missing 'location' or 'current')."}
-
-        # Keep only the fields the agent needs for interpretation.
         return {
-            "location": {
-                "name": location.get("name"),
-                "region": location.get("region"),
-                "country": location.get("country"),
-                "localtime": location.get("localtime"),
-            },
-            "current": {
-                "observation_time": current.get("observation_time"),
-                "temperature": current.get("temperature"),
-                "feelslike": current.get("feelslike"),
-                "weather_descriptions": current.get("weather_descriptions"),
-                "wind_speed": current.get("wind_speed"),
-                "wind_dir": current.get("wind_dir"),
-                "humidity": current.get("humidity"),
-            },
+            "temperature": data["main"]["temp"],
+            "condition": data["weather"][0]["description"]
         }
-
     except Exception as e:
-        return {"error": f"{type(e).__name__}: {e}"}
+        return {"error": str(e)}

@@ -1,13 +1,18 @@
-from __future__ import annotations
+"""
+Defines the system prompt used to steer the agent’s behavior in production.
 
-from langchain_core.prompts import ChatPromptTemplate
+This prompt sets:
+- When the assistant should use external tools (math, date handling, text analysis, weather) instead of guessing.
+- How to interpret weather tool output fields for user-facing summaries and clothing suggestions.
+- Output constraints (single, human-friendly final answer; include key computed/fetched values; avoid exposing internal tool payloads).
+
+Keeping this prompt in one place makes agent behavior consistent, auditable, and easy to update.
+"""
 
 
-SYSTEM_PROMPT = """You are a production-grade assistant with access to tools:
-- math_tool(expression: str) -> str
-- text_analyzer_tool(text: str) -> dict
-- date_utility_tool(days: int) -> str
-- weather_api_tool(city: str, country: Optional[str]) -> dict (Weatherstack)
+
+
+system_prompt = """You are a production-grade assistant.
 
 Tool-use policy:
 - Use tools whenever the user asks for calculations, counting/analysis of text, dates, or live weather.
@@ -26,11 +31,3 @@ Response rules:
 - Include key computed/fetched values (numbers/dates/weather) in the final answer.
 - Do not mention internal scratchpad/tool JSON.
 """
-
-AGENT_PROMPT: ChatPromptTemplate = ChatPromptTemplate.from_messages(
-    [
-        ("system", SYSTEM_PROMPT),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}"),
-    ]
-)

@@ -1,25 +1,41 @@
-from __future__ import annotations
+"""
+agent.py
 
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+Creates a LangChain agent (LangGraph-backed) that can call a set of tools in a loop
+until it produces a final answer (or hits a stop/iteration limit). [web:1][web:5]
+
+This module wires together:
+- A Google Gemini chat model (provided by `client.model`).
+- A system prompt (from `prompt.system_prompt`) that defines agent behavior.
+- A list of tools (from `tools.*`) that the agent is allowed to call. [web:1][web:5]
+
+Usage:
+    from agent import agent
+
+    # Typical invocation shape (LangChain v1 agents expect "messages" state):
+    result = agent.invoke({
+        "messages": [{"role": "user", "content": "What's the weather in Gurugram?"}]
+    })
+
+Notes:
+- Ensure each tool has type hints and a concise docstring; the agent/model uses
+  thos
+
+"""
+from langchain.agents import create_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from prompts import AGENT_PROMPT
-from tools import math_tool, text_analyzer_tool, date_utility_tool, weather_api_tool
+from client import model
+from prompt import system_prompt
+from tools import math_calculator, date_utility_tool, get_weather, analyze_text
 
 
-def build_agent_executor(
-    model: str = "gemini-1.5-flash",
-    temperature: float = 0.2,
-) -> AgentExecutor:
-    tools = [math_tool, text_analyzer_tool, date_utility_tool, weather_api_tool]
+llm = model
 
-    llm = ChatGoogleGenerativeAI(model=model, temperature=temperature)
-    agent = create_tool_calling_agent(llm, tools, AGENT_PROMPT)
+tools = [math_calculator, date_utility_tool, get_weather,analyze_text]
 
-    return AgentExecutor(
-        agent=agent,
-        tools=tools,
-        verbose=True,
-        return_intermediate_steps=True,
-        handle_parsing_errors=True,
-    )
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=system_prompt
+)

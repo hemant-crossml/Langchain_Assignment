@@ -20,6 +20,12 @@ load_dotenv()
 # Read Gemini API key from environment
 gemini_api_key = os.getenv("GEMINI_API_KEY","")
 
+# Read weather api key from environment
+weather_api_key=os.getenv('WEATHER_API_KEY',"")
+
 # Validate API key existence
 if not gemini_api_key:
     raise EnvironmentError("GEMINI_API_KEY not found in .env file")
+
+if not weather_api_key:
+    raise EnvironmentError("WEATHER_API_KEY not found in .env file")
