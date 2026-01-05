@@ -1,91 +1,115 @@
 """
-run_examples.py
-
-Runs multiple end-to-end examples against the preconfigured LangChain agent and
-logs results to both the console and a file for easy debugging and repeatable demos. 
-
-What this script does:
-- Configures Python logging with two handlers:
-  - `FileHandler("agent_execution.log")` to persist logs to disk. [web:24]
-  - `StreamHandler()` to also show logs in the terminal (defaults to stderr). [web:21][web:24]
-- Invokes the agent using the LangGraph agent API via `agent.invoke({"messages": [...]})`. [web:1]
-- Wraps each example in `try/except` so one failing example doesn’t stop the rest. [web:24]
-
-How to run:
-    python run_examples.py
-
-Expected inputs/outputs:
-- Inputs are chat-style `messages` dicts (role/content) compatible with LangChain’s
-  message dictionary format. [web:30]
-- The agent result includes a `messages` list; the last entry is typically the final
-  assistant message, which is logged. [web:1]
+main.py
+-------
+Run all examples from one file.
+Demonstrates agent invocation with comprehensive logging for debugging.
 """
 
-
-import logging
 from agent import agent
+from logger_config import setup_logger
+import traceback
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[
-        logging.FileHandler('agent_execution.log'),
-        logging.StreamHandler()
-    ]
-)
+# Initialize logger for main module
+logger = setup_logger(__name__)
 
-logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    # Example 1: Math Calculation
-    logger.info("\n" + "="*50)
-    logger.info("Example 1: Math Calculation")
-    logger.info("="*50)
+    logger.info("="*70)
+    logger.info("APPLICATION STARTED")
+    logger.info("="*70)
     
+    # ==================== Example 1: Math Calculation ====================
     try:
+        logger.info("\n[EXAMPLE 1] Starting math calculation example")
+        user_query_1 = "What is (234 * 12) + 98?"
+        logger.info(f"[EXAMPLE 1] User query: {user_query_1}")
+        
         math_response = agent.invoke({
-            "messages": [
-                {"role": "user", "content": "What is (234 * 12) + 98?"}
-            ]
+            "messages": [{"role": "user", "content": user_query_1}]
         })
-        logger.info(f"Math Response: {math_response['messages'][-1].content}")
+        
+        logger.info(f"[EXAMPLE 1] Agent invocation completed successfully")
+        logger.debug(f"[EXAMPLE 1] Response messages count: {len(math_response['messages'])}")
+        logger.debug(f"[EXAMPLE 1] Final message type: {type(math_response['messages'][-1])}")
+        
+        print("\n--- Example 1 ---")
+        print(math_response["messages"][-1].content)
+        
+        logger.info(f"[EXAMPLE 1] Output displayed to user")
+        
+    except KeyError as e:
+        logger.error(f"[EXAMPLE 1] KeyError - missing expected key in response: {e}", exc_info=True)
+        print(f"\n--- Example 1 FAILED ---")
+        print(f"Error: Missing expected data in response - {e}")
+        
     except Exception as e:
-        logger.error(f"Error in Math Calculation: {e}", exc_info=True)
-
-    # Example 2: Multi Tool Example
-    logger.info("\n" + "="*50)
-    logger.info("Multi Tool Example")
-    logger.info("="*50)
+        logger.error(f"[EXAMPLE 1] Unexpected error occurred: {e}", exc_info=True)
+        logger.debug(f"[EXAMPLE 1] Full traceback:\n{traceback.format_exc()}")
+        print(f"\n--- Example 1 FAILED ---")
+        print(f"Error: {e}")
     
+    # Example 2: Multi-Tool Usage
     try:
+        logger.info("\n[EXAMPLE 2] Starting multi-tool example")
+        user_query_2 = "Calculate the total cost if I buy 3 items priced at 499 each and tell me the delivery date if shipping takes 7 days."
+        logger.info(f"[EXAMPLE 2] User query: {user_query_2}")
+        
         multi_response = agent.invoke({
             "messages": [
-                {"role": "user",
-                 "content": "Calculate the total cost if I buy 3 items priced at 499 each and tell me the delivery date if shipping takes 7 days."}
+                {"role": "user", "content": user_query_2}
             ]
         })
-        logger.info(f"Multi Tool Response: {multi_response['messages'][-1].content}")
+        
+        logger.info(f"[EXAMPLE 2] Agent invocation completed successfully")
+        logger.debug(f"[EXAMPLE 2] Response messages count: {len(multi_response['messages'])}")
+        
+        print("\n--- Multi Tool Example ---")
+        print(multi_response["messages"][-1].content)
+        
+        logger.info(f"[EXAMPLE 2] Output displayed to user")
+        
+    except KeyError as e:
+        logger.error(f"[EXAMPLE 2] KeyError - missing expected key in response: {e}", exc_info=True)
+        print(f"\n--- Multi Tool Example FAILED ---")
+        print(f"Error: Missing expected data in response - {e}")
+        
     except Exception as e:
-        logger.error(f"Error in Multi Tool Example: {e}", exc_info=True)
-
-    # Example 3: Real API Tool (Weather)
-    logger.info("\n" + "="*50)
-    logger.info("Real API Tool Example: Weather Query")
-    logger.info("="*50)
+        logger.error(f"[EXAMPLE 2] Unexpected error occurred: {e}", exc_info=True)
+        logger.debug(f"[EXAMPLE 2] Full traceback:\n{traceback.format_exc()}")
+        print(f"\n--- Multi Tool Example FAILED ---")
+        print(f"Error: {e}")
     
+    # Example 3: Weather API 
     try:
+        logger.info("\n[EXAMPLE 3] Starting weather API example")
+        user_query_3 = "What is today's weather in Chandigarh and suggest clothing accordingly?"
+        logger.info(f"[EXAMPLE 3] User query: {user_query_3}")
+        
         api_response = agent.invoke({
             "messages": [
-                {"role": "user",
-                 "content": "What is today's weather in Chandigarh and suggest clothing accordingly?"}
+                {"role": "user", "content": user_query_3}
             ]
         })
-        logger.info(f"Weather Response: {api_response['messages'][-1].content}")
+        
+        logger.info(f"[EXAMPLE 3] Agent invocation completed successfully")
+        logger.debug(f"[EXAMPLE 3] Response messages count: {len(api_response['messages'])}")
+        
+        print("\n--- Real API Tool Example ---")
+        print(api_response["messages"][-1].content)
+        
+        logger.info(f"[EXAMPLE 3] Output displayed to user")
+        
+    except KeyError as e:
+        logger.error(f"[EXAMPLE 3] KeyError - missing expected key in response: {e}", exc_info=True)
+        print(f"\n--- Real API Tool Example FAILED ---")
+        print(f"Error: Missing expected data in response - {e}")
+        
     except Exception as e:
-        logger.error(f"Error in Weather API Call: {e}", exc_info=True)
-
-    logger.info("\n" + "="*50)
-    logger.info("All examples completed")
-    logger.info("="*50)
+        logger.error(f"[EXAMPLE 3] Unexpected error occurred: {e}", exc_info=True)
+        logger.debug(f"[EXAMPLE 3] Full traceback:\n{traceback.format_exc()}")
+        print(f"\n--- Real API Tool Example FAILED ---")
+        print(f"Error: {e}")
+    
+    logger.info("="*70)
+    logger.info("ALL EXAMPLES COMPLETED")
+    logger.info("="*70)
