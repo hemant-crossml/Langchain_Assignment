@@ -1,6 +1,11 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langch
+from langchain_core.tools import tool
+from langchain_community.tools import DuckDuckGoSearchRun
+import requests
+
 from cred import gemini_api_key
+
+search_tool = DuckDuckGoSearchRun()
 
 model= ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
