@@ -1,8 +1,9 @@
 # LANGCHAIN_ASSIGNMENT
-This repository demonstrates the implementation of **LangChain tool-based agents** using **Google Gemini models**.
-The project showcases how Large Language Models (LLMs) can dynamically choose and invoke **single tools, multiple tools, and API-based tools** to solve user queries.
+
+#### This repository demonstrates the implementation of **LangChain tool-based agents** using **Google Gemini models**.
+#### The project showcases how Large Language Models (LLMs) can dynamically choose and invoke **single tools, multiple tools, and API-based tools** to solve user queries.
 ---
-## :drawing_pin: Project Objective
+## Project Objective
 The goal of this assignment is to:
 - Understand **LangChain Agents**
 - Implement **custom tools**
@@ -33,7 +34,7 @@ The goal of this assignment is to:
 yaml
 Copy code
 ---
-## :cog: Installation & Setup
+## Installation & Setup
 ### :one: Clone the Repository
             git clone https://github.com/hemant-crossml/Langchain_Assignment.git
             cd Langchain_Assignment
@@ -47,7 +48,7 @@ Add your Gemini API Key in cred.py:
 ### :warning: Important:
 Do not commit your real API key to GitHub.
 Use .env and environment variables for production projects.
-### :arrow_forwards: How to Run
+### How to Run
 Run the main application:
     python main.py
 The agent will:
@@ -55,13 +56,13 @@ The agent will:
 - Select the appropriate tool
 - Execute the tool
 - Return the final response
-### :drawing_pin: Example Use Cases
+### Example Use Cases
 - Solve mathematical calculations
 - Find future dates
 - Analyze text content
 - Fetch weather information
 - Dynamically choose tools based on query intent
-### :test_tube: Learning Outcomes
+### Learning Outcomes
 - Practical understanding of LangChain Agents
 - Tool invocation and orchestration
 - Differences between single-tool and multi-tool agents
