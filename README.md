@@ -7,7 +7,7 @@
 The goal of this assignment is to:
 - Understand **LangChain Agents**
 - Implement **custom tools**
-- Explore **single-tool vs multi-tool agents**
+- Explore **single-tool and multi-tool agents**
 - Integrate **external APIs** with LLMs
 - Learn practical **agent orchestration** using Google Gemini
 ---
