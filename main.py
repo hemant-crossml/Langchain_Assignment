@@ -14,13 +14,15 @@ from prompt import system_prompt, user_query_1,user_query_2,user_query_3
 # Initialize logger for main module
 logger = setup_logger(__name__)
 
-#
+# Message structure for Example 1: Simple math calculation query
 message1 = {
     "messages": [
         system_prompt,
         user_query_1
     ]
 }
+
+# Message structure for Example 2: Multi-tool usage (math + date operations)
 message2 = {
     "messages": [
         system_prompt,
@@ -28,6 +30,7 @@ message2 = {
     ]
 }
 
+# Message structure for Example 3: Weather API query with clothing recommendations
 message3 = {
     "messages": [
         system_prompt,

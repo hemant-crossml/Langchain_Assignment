@@ -1,12 +1,24 @@
 """
-Defines the system prompt used to steer the agent’s behavior in production.
+prompt.py
+---------
+Centralized prompt configuration module for the LangChain agent application.
 
-This prompt sets:
-- When the assistant should use external tools (math, date handling, text analysis, weather) instead of guessing.
-- How to interpret weather tool output fields for user-facing summaries and clothing suggestions.
-- Output constraints (single, human-friendly final answer; include key computed/fetched values; avoid exposing internal tool payloads).
+This module defines:
+    - system_prompt: Core system message that governs agent behavior, tool usage policies,
+      and response formatting guidelines
+    - user_query_1: Test query for mathematical calculations
+    - user_query_2: Test query for multi-tool usage (math + date operations)
+    - user_query_3: Test query for weather API integration with recommendations
 
-Keeping this prompt in one place makes agent behavior consistent, auditable, and easy to update.
+Purpose:
+    Keeping all prompts in a single module ensures consistency, maintainability, and 
+    makes it easy to audit or update agent behavior without touching the main application logic.
+
+Design Principles:
+    - System prompt explicitly defines when to use tools vs. when to rely on knowledge
+    - All tool outputs are treated as authoritative
+    - Responses must be human-friendly without exposing internal technical details
+    - Weather-based recommendations follow clear temperature thresholds
 """
 
 from langchain.messages import SystemMessage, HumanMessage 
