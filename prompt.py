@@ -9,10 +9,10 @@ This prompt sets:
 Keeping this prompt in one place makes agent behavior consistent, auditable, and easy to update.
 """
 
+from langchain.messages import SystemMessage, HumanMessage 
 
 
-
-system_prompt = """
+system_prompt = SystemMessage("""
 ## ROLE
 You are an intelligent production-grade assistant powered by LangChain with access to specialized tools for mathematical calculations, date operations, text analysis, and real-time weather information.
 
@@ -53,3 +53,8 @@ You are an intelligent production-grade assistant powered by LangChain with acce
 - You MUST include relevant context and units in answers
 
 """
+)
+
+user_query_1=HumanMessage("What is (234 * 12) + 98?")
+user_query_2=HumanMessage("Calculate the total cost if I buy 3 items priced at 499 each and tell me the delivery date if shipping takes 7 days.")
+user_query_3=HumanMessage("What is today's weather in Chandigarh and suggest clothing accordingly?") 

@@ -41,7 +41,6 @@ try:
     agent = create_agent(
         model=model,
         tools=tools,
-        system_prompt=system_prompt
     )
     logger.info("Agent created successfully")
 except Exception as e:

@@ -4,14 +4,36 @@ main.py
 Run all examples from one file.
 Demonstrates agent invocation with comprehensive logging for debugging.
 """
+import traceback
 
 from agent import agent
 from logger_config import setup_logger
-import traceback
+from prompt import system_prompt, user_query_1,user_query_2,user_query_3
+
 
 # Initialize logger for main module
 logger = setup_logger(__name__)
 
+#
+message1 = {
+    "messages": [
+        system_prompt,
+        user_query_1
+    ]
+}
+message2 = {
+    "messages": [
+        system_prompt,
+        user_query_2
+    ]
+}
+
+message3 = {
+    "messages": [
+        system_prompt,
+        user_query_3
+    ]
+}
 
 if __name__ == "__main__":
     logger.info("="*70)
@@ -21,12 +43,10 @@ if __name__ == "__main__":
     # ==================== Example 1: Math Calculation ====================
     try:
         logger.info("\n[EXAMPLE 1] Starting math calculation example")
-        user_query_1 = "What is (234 * 12) + 98?"
+        # user_query_1 = "What is (234 * 12) + 98?"
         logger.info(f"[EXAMPLE 1] User query: {user_query_1}")
         
-        math_response = agent.invoke({
-            "messages": [{"role": "user", "content": user_query_1}]
-        })
+        math_response = agent.invoke(message1)
         
         logger.info(f"[EXAMPLE 1] Agent invocation completed successfully")
         logger.debug(f"[EXAMPLE 1] Response messages count: {len(math_response['messages'])}")
@@ -53,12 +73,8 @@ if __name__ == "__main__":
         logger.info("\n[EXAMPLE 2] Starting multi-tool example")
         user_query_2 = "Calculate the total cost if I buy 3 items priced at 499 each and tell me the delivery date if shipping takes 7 days."
         logger.info(f"[EXAMPLE 2] User query: {user_query_2}")
-        
-        multi_response = agent.invoke({
-            "messages": [
-                {"role": "user", "content": user_query_2}
-            ]
-        })
+
+        multi_response = agent.invoke(message2)
         
         logger.info(f"[EXAMPLE 2] Agent invocation completed successfully")
         logger.debug(f"[EXAMPLE 2] Response messages count: {len(multi_response['messages'])}")
@@ -82,14 +98,9 @@ if __name__ == "__main__":
     # Example 3: Weather API 
     try:
         logger.info("\n[EXAMPLE 3] Starting weather API example")
-        user_query_3 = "What is today's weather in Chandigarh and suggest clothing accordingly?"
         logger.info(f"[EXAMPLE 3] User query: {user_query_3}")
         
-        api_response = agent.invoke({
-            "messages": [
-                {"role": "user", "content": user_query_3}
-            ]
-        })
+        api_response = agent.invoke(message3)
         
         logger.info(f"[EXAMPLE 3] Agent invocation completed successfully")
         logger.debug(f"[EXAMPLE 3] Response messages count: {len(api_response['messages'])}")
