@@ -1,3 +1,4 @@
 langchain-google-genai==4.1.2
 langchain==1.2.0
 python-dotenv==1.2.1
+mem0ai==1.0.1
