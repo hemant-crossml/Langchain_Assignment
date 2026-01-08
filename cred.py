@@ -50,3 +50,6 @@ if not memo_api_key:
 
 
 logger.info("All required API keys validated successfully")
+
+# User ID for memory persistence (can be made dynamic for multi-user systems)
+USER_ID="Hemant"
