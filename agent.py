@@ -8,7 +8,6 @@ from langchain.agents import create_agent
 from langchain_core.messages import SystemMessage
 from client import model, mem0
 from prompt import system_prompt
-from cred import USER_ID
 from tools import math_calculator, date_utility_tool, get_weather, analyze_text
 from logger_config import setup_logger
 
@@ -20,46 +19,22 @@ tools = [math_calculator, date_utility_tool, get_weather, analyze_text]
 logger.debug(f"Registered tools: {[tool.name for tool in tools]}")
 
 
-# def retrieve_memories(query: str, user_id: str) -> List[dict]:
-#     """
-#     Retrieve relevant memories from Mem0 for context.
-    
-#     Args:
-#         query: User's current input
-#         user_id: Unique identifier for the user
-        
-#     Returns:
-#         Formatted string of relevant memories
-#     """
-#     logger.info(f"Retrieving memories for user: {user_id}")
-#     try:
-#         memories = mem0.search(query,filters={ "user_id":user_id})
-#         memory_list = memories["results"]
-#         if not memory_list:
-#             logger.debug("No relevant memories found")
-#             return "No previous context available."
-        
-#         logger.info(f"Retrieved {len(memory_list)} relevant memories")
-#         serialized_memories = ' '.join([mem["memory"] for mem in memory_list])
-#         context = [
-#             {
-#                 "role": "system", 
-#                 "content": f"Relevant information: {serialized_memories}"
-#             },
-#             {
-#                 "role": "user",
-#                 "content": query
-#             }
-#         ]
-        
-#         return context
-#     except Exception as e:
-#         logger.error(f"Error retrieving memories: {str(e)}", exc_info=True)
-#         return "No previous context available."
-
 def retrieve_memories(query: str, user_id: str) -> List[str]:
     """
-    Retrieve relevant memories from Mem0 for context.
+    Summary:
+        Retrieve relevant memories from Mem0 for context enrichment.
+    
+    Searches the Mem0 database for memories associated with the specified user
+    that are relevant to the provided query. Skips memory retrieval for short
+    queries (less than 3 words) to optimize performance.
+    
+    Args:
+        query (str): The user's input query to search for relevant memories.
+        user_id (str): Unique identifier for the user whose memories to retrieve.
+    
+    Returns:
+        str: Serialized string of relevant memories, one per line with bullet points.
+             Returns empty string if no memories found or query is too short.
     """
     logger.info(f"Retrieving memories for user: {user_id}")
 
@@ -82,7 +57,6 @@ def retrieve_memories(query: str, user_id: str) -> List[str]:
         serialized = "\n".join(
             f"- {mem['memory']}" for mem in memory_list
         )
-
         logger.info(f"Retrieved {len(memory_list)} memories")
         return serialized
 
@@ -93,12 +67,19 @@ def retrieve_memories(query: str, user_id: str) -> List[str]:
 
 def save_interaction(user_id: str, user_input: str, assistant_response: str):
     """
-    Save the conversation turn to Mem0.
+    Summary:
+        Save the conversation turn to Mem0 for future context.
+    
+    Stores both the user's message and the assistant's response in the Mem0
+    database, enabling persistent memory across sessions.
     
     Args:
-        user_id: Unique identifier for the user
-        user_input: User's message
-        assistant_response: Agent's response
+        user_id (str): Unique identifier for the user.
+        user_input (str): The user's message content.
+        assistant_response (str): The agent's generated response.
+    
+    Returns:
+        None
     """
     logger.info(f"Saving interaction to Mem0 for user: {user_id}")
     try:
@@ -112,44 +93,25 @@ def save_interaction(user_id: str, user_input: str, assistant_response: str):
     except Exception as e:
         logger.error(f"Error saving interaction to Mem0: {str(e)}", exc_info=True)
 
-# def save_interaction(user_id: str, user_input: str, assistant_response: str):
-#     """
-#     Save the conversation turn to Mem0.
-#     """
-#     logger.info(f"Saving interaction to Mem0 for user: {user_id}")
-
-#     messages = []
-
-#     # 🔹 Extract facts
-#     if "my name is" in user_input.lower():
-#         name = user_input.lower().split("my name is")[-1].strip().title()
-#         messages.append({
-#             "role": "system",
-#             "content": f"User's name is {name}"
-#         })
-
-#     messages.extend([
-#         {"role": "user", "content": user_input},
-#         {"role": "assistant", "content": assistant_response}
-#     ])
-
-#     try:
-#         result = mem0.add(messages=messages, user_id=user_id)
-#         logger.info(f"Memory saved successfully: {len(result.get('results', []))}")
-#     except Exception as e:
-#         logger.error(f"Error saving interaction to Mem0: {str(e)}", exc_info=True)
-
 
 def invoke_agent_with_memory(messages: Dict, user_id: str = "default_user") -> Dict:
     """
-    Invoke agent with memory-enhanced context.
+    Summary:
+        Invoke agent with memory-enhanced context for personalized responses.
+    
+    Retrieves relevant memories for the user, enhances the system prompt with
+    memory context, invokes the LangChain agent, and saves the interaction back
+    to Mem0.
     
     Args:
-        messages: Message dictionary with 'messages' key
-        user_id: Unique user identifier for memory persistence
-        
+        messages (Dict): Message dictionary containing a 'messages' key with
+                        conversation history as list of message objects.
+        user_id (str, optional): Unique user identifier for memory persistence.
+                                Defaults to "default_user".
+    
     Returns:
-        Agent response with updated messages
+        Dict: Agent response containing updated messages with the assistant's reply.
+    
     """
     logger.info(f"Agent invocation with memory for user: {user_id}")
     
@@ -180,7 +142,6 @@ def invoke_agent_with_memory(messages: Dict, user_id: str = "default_user") -> D
     
     # Invoke agent
     try:
-        agent = create_agent(model=model, tools=tools)
         response = agent.invoke(enhanced_messages)
         
         # Extract assistant response
@@ -196,7 +157,7 @@ def invoke_agent_with_memory(messages: Dict, user_id: str = "default_user") -> D
         logger.error(f"Failed to invoke agent with memory: {str(e)}", exc_info=True)
         raise
 
-
+# Initialize agent at module level (single initialization)
 try:
     agent = create_agent(model=model, tools=tools)
     logger.info("Agent created successfully")
