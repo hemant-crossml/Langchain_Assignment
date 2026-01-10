@@ -14,8 +14,9 @@ Security:
   or a separate secrets/credentials file that is not committed).
 """
 from langchain_google_genai import ChatGoogleGenerativeAI
+from mem0 import MemoryClient
 
-from cred import gemini_api_key
+from cred import gemini_api_key, memo_api_key
 from logger_config import setup_logger
 
 # Initialize logger for this module
@@ -33,7 +34,17 @@ try:
         max_output_tokens=512,   # output length cap
     )
     logger.info("Gemini model initialized successfully")
-    logger.debug(f"Model config: model=gemini-2.5-flash, temp=0.2, top_p=0.9, top_k=40, max_tokens=512")
+    logger.debug(f"Model config: model=gemini-2.5-flash-lite, temp=0.2, top_p=0.9, top_k=40, max_tokens=512")
 except Exception as e:
     logger.error(f"Failed to initialize Gemini model: {str(e)}", exc_info=True)
     raise
+
+logger.info("Initializing Mem0")
+
+try:
+    mem0=MemoryClient(api_key=memo_api_key)
+    logger.info("memo initialized successfully")
+except Exception as e:
+    logger.error("Failed to initialize Mem0.")
+    raise
+
