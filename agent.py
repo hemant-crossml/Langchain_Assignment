@@ -4,8 +4,10 @@ agent.py
 LangChain agent with Mem0 memory integration for personalized responses.
 """
 from typing import Dict, List
+
 from langchain.agents import create_agent
 from langchain_core.messages import SystemMessage
+
 from client import model, mem0
 from prompt import system_prompt
 from tools import math_calculator, date_utility_tool, get_weather, analyze_text
