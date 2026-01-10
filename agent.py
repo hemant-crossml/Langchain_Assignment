@@ -21,9 +21,9 @@ Notes:
 - Ensure each tool has type hints and a concise docstring; the agent/model uses those
 """
 from langchain.agents import create_agent
-from langchain_google_genai import ChatGoogleGenerativeAI
+
 from client import model
-from prompt import system_prompt
+
 from tools import math_calculator, date_utility_tool, get_weather, analyze_text
 from logger_config import setup_logger
 

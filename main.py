@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # ==================== Example 1: Math Calculation ====================
     try:
         logger.info("\n[EXAMPLE 1] Starting math calculation example")
-        # user_query_1 = "What is (234 * 12) + 98?"
+        
         logger.info(f"[EXAMPLE 1] User query: {user_query_1}")
         
         math_response = agent.invoke(message1)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # Example 2: Multi-Tool Usage
     try:
         logger.info("\n[EXAMPLE 2] Starting multi-tool example")
-        user_query_2 = "Calculate the total cost if I buy 3 items priced at 499 each and tell me the delivery date if shipping takes 7 days."
+        
         logger.info(f"[EXAMPLE 2] User query: {user_query_2}")
 
         multi_response = agent.invoke(message2)
